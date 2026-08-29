@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonBox Loading Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Monoton&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           ОСНОВНЫЕ СТИЛИ (Фон и эстетика)
+           ========================================= */
+        :root {
+            --cyan: #00ffff;
+            --magenta: #ff00c8;
+            --indigo: #1b163d;
+            --dark-blue: #090a0f;
+            --red-moon: #ff4b72;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg, var(--dark-blue) 0%, var(--indigo) 50%, #4a1942 100%);
+            color: #fff;
+            font-family: 'VT323', monospace; /* Ретро-шрифт для интерфейса */
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Эффект ЭЛТ-монитора (сканлайны) */
+        .crt-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* Центральная планета/луна */
+        .moon {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 45vw;
+            height: 45vw;
+            max-width: 600px;
+            max-height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--red-moon), #8b1338);
+            box-shadow: -20px 0 40px 5px var(--cyan), 0 0 60px 15px rgba(255, 75, 114, 0.4);
+            z-index: 1;
+        }
+
+        /* =========================================
+           ЭЛЕМЕНТЫ ИНТЕРФЕЙСА (Сетка и блоки)
+           ========================================= */
+        .ui-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        /* Логотип (Vaporwave стиль) */
+        .logo-container {
+            text-align: center;
+            margin-top: 15vh;
+        }
+
+        .logo {
+            font-family: 'Monoton', cursive;
+            font-size: 5rem;
+            color: #fff;
+            text-transform: uppercase;
+            text-shadow: 3px 3px 0 var(--magenta), -3px -3px 0 var(--cyan);
+            margin: 0;
+            letter-spacing: 5px;
+        }
+
+        /* Стили панелей */
+        .panel {
+            background: rgba(10, 10, 25, 0.7);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), inset 0 0 10px rgba(0, 255, 255, 0.2);
+            padding: 1.5rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .panel-title {
+            color: var(--magenta);
+            font-size: 2rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            text-shadow: 1px 1px 5px rgba(255, 0, 200, 0.8);
+            border-bottom: 1px dashed var(--cyan);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Левая панель - Список игроков */
+        .left-panel {
+            position: absolute;
+            top: 20%;
+            left: 2rem;
+            width: 300px;
+            height: 50vh;
+            overflow-y: auto;
+        }
+
+        .player-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .player-list li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .player-list li span:last-child {
+            color: var(--cyan);
+        }
+
+        /* Нижняя часть (Загрузка и Статистика) */
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: auto;
+            width: 100%;
+        }
+
+        /* Полоса загрузки */
+        .loading-wrapper {
+            width: 60%;
+            text-align: center;
+        }
+
+        .loading-text {
+            font-size: 2rem;
+            color: var(--cyan);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--magenta);
+            box-shadow: 0 0 15px rgba(255, 0, 200, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: repeating-linear-gradient(
+                -45deg,
+                var(--magenta),
+                var(--magenta) 10px,
+                #b3008c 10px,
+                #b3008c 20px
+            );
+            transition: width 0.2s linear;
+        }
+
+        /* Статистика игрока */
+        .stats-panel {
+            width: 60%;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .stat-item {
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 2rem;
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--cyan);
+            margin-top: 5px;
+        }
+
+        /* Глитч-декорации (имитация блоков из макета) */
+        .glitch-box {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background-size: cover;
+            border: 1px solid var(--magenta);
+            box-shadow: 2px 2px 0 var(--cyan), -2px -2px 0 var(--magenta);
+            opacity: 0.6;
+            z-index: 5;
+            mix-blend-mode: screen;
+        }
+
+        .glitch-box.left {
+            top: 5%;
+            left: 20%;
+            /* Placeholder pattern for anime/palm aesthetic */
+            background: repeating-linear-gradient(45deg, #000, #000 10px, var(--magenta) 10px, var(--cyan) 20px);
+        }
+
+        .glitch-box.right {
+            top: 30%;
+            right: 5%;
+            background: repeating-linear-gradient(-45deg, #000, #000 10px, #00ff00 10px, var(--indigo) 20px);
+        }
+        
+        /* Скроллбар для списка игроков */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-left: 1px solid var(--cyan); }
+        ::-webkit-scrollbar-thumb { background: var(--magenta); }
+    </style>
+</head>
+<body>
+    <div class="crt-overlay"></div>
+    <div class="moon"></div>
+    
+    <!-- Декоративные глитч-элементы из эскиза -->
+    <div class="glitch-box left"></div>
+    <div class="glitch-box right"></div>
+
+    <div class="ui-container">
+        <!-- Логотип -->
+        <div class="logo-container">
+            <h1 class="logo" id="server-name">MoonBox.ru</h1>
+        </div>
+
+        <!-- Левая панель: Список игроков -->
+        <div class="panel left-panel">
+            <h2 class="panel-title">Список игроков</h2>
+            <ul class="player-list" id="player-list">
+                <!-- Демонстрационные данные -->
+                <li><span>Player_One</span> <span>Ping: 24</span></li>
+                <li><span>Vapor_Wave_99</span> <span>Ping: 45</span></li>
+                <li><span>NeonRider</span> <span>Ping: 12</span></li>
+                <li><span>GMod_User</span> <span>Ping: 60</span></li>
+                <li><span>Synth_Lord</span> <span>Ping: 33</span></li>
+            </ul>
+        </div>
+
+        <!-- Нижняя часть: Прогресс и Статистика -->
+        <div class="bottom-section">
+            <div class="loading-wrapper">
+                <div class="loading-text" id="loading-status">Загрузка файлов...</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+
+            <div class="panel stats-panel">
+                <div class="stat-item">
+                    Ваш SteamID
+                    <span class="stat-value" id="user-steamid">STEAM_0:0:000000</span>
+                </div>
+                <div class="stat-item">
+                    Карта
+                    <span class="stat-value" id="server-map">gm_construct</span>
+                </div>
+                <div class="stat-item">
+                    Игроки
+                    <span class="stat-value" id="server-players">0 / 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Интеграция с Garry's Mod (JavaScript функции) -->
+    <script>
+        // Всего файлов для скачивания
+        let totalFiles = 50; 
+        let downloadedFiles = 0;
+
+        // Вызывается GMod при старте загрузки
+        function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode) {
+            if (servername) document.getElementById('server-name').innerText = servername;
+            if (mapname) document.getElementById('server-map').innerText = mapname;
+            if (steamid) document.getElementById('user-steamid').innerText = steamid;
+            if (maxplayers) document.getElementById('server-players').innerText = `? / ${maxplayers}`;
+        }
+
+        // Вызывается GMod при смене статуса загрузки
+        function SetStatusChanged(status) {
+            document.getElementById('loading-status').innerText = status;
+        }
+
+        // Вызывается GMod, сообщает общее количество файлов
+        function SetFilesTotal(total) {
+            totalFiles = total;
+            updateProgress();
+        }
+
+        // Вызывается GMod, сообщает сколько файлов осталось
+        function SetFilesNeeded(needed) {
+            downloadedFiles = totalFiles - needed;
+            updateProgress();
+        }
+
+        // Обновление UI прогресс-бара
+        function updateProgress() {
+            if (totalFiles > 0) {
+                let percentage = (downloadedFiles / totalFiles) * 100;
+                document.getElementById('progress-bar').style.width = percentage + '%';
+            }
+        }
+    </script>
+</body>
+</html>
